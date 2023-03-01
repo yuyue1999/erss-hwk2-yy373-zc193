@@ -1,0 +1,20 @@
+
+1. Cannot make a GET request to the http://www.artsci.utoronto.ca/future, because we forget to deal with the 3xx redirection in our Response* Proxy::GetRequest() function
+2. Cannot connect to https://www.artsci.utoronto.ca/future, because in our ConnectRequest() function, we use sizeof() to calculate the size of the vector
+3. When dealing with the GET request which is content-length, it is very slow. Because the recv function is still waiting to receive message from the original server, and there is nothing to send from the original server. We compare the value of the content-length with the body size
+we have already received to decide break the loop or not, which largely speeds up.
+4. When dealing with the CONNECT and POST request, memory leak. Delete the memory we allocate. 
+5. When we use control+C to stop the proxy, the file (proxy.log) is not closed. We design a class with destructor which contains file.close() to make sure it is closed.
+6. When dealing with the GET request to open a gif or an image resource, we cannot get it. Because we use string to store the body information, but Image information may contain premature terminators of character strings, resulting in incomplete data storage.
+We use vector<char> to store it.
+7. We forgot the Cache Control with maxAge=0 should be revalidated.
+8. If there is no "Expires" in respond, we have terminate called after throwing an instance of 'std::logic_error'
+what():  basic_string::_M_construct null not valid
+Aborted (core dumped)
+We add a if(Tres->response.find("Expires")!=std::string::npos) to make sure this will not happen 
+
+Exception :
+1. We have closed the socket_fd after finishing the thread. 
+2. We have deleted all of the space allocated. 
+3. We make sure to close the file we open. 
+Basic exception guarantees
